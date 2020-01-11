@@ -28,8 +28,10 @@ GAcreate = """ Create a Google Account with a company email address: \n\n1. Go t
 
 
 def google_analytics_audit(analytics):
+    counter = 0
     try:
       accounts = AccountSummaries.main()
+      #accounts = ['UA-107971078-1']
       #myEmail = ['reddypramod85@gmail.com','denis.choukroun51@gmail.com','didier.lalli@gmail.com']
       myEmail = ['reddypramod85@gmail.com']
       # myEmail = ['gapramodtest@ga-api-test-pramod.iam.gserviceaccount.com']
@@ -39,19 +41,57 @@ def google_analytics_audit(analytics):
         for property in account.get('webProperties', []):
           print ('   %s (%s)   [%s | %s]\n' % (property.get('name'), property.get('id'),property.get('websiteUrl'), property.get('level')))
           # print ('   [%s | %s]' % (property.get('websiteUrl'), property.get('level')))
-          property_links = analytics.management().webpropertyUserLinks().list(
-            accountId=account.get('id'),
-            webPropertyId=property.get('id')
-            ).execute()
-          hpeEmailList = []
-          nonHpeEmailList = []
+          try:
+            property_links = analytics.management().webpropertyUserLinks().list(
+              accountId=account.get('id'),
+              webPropertyId=property.get('id')
+              ).execute()
+          except HttpError as error:
+            # Handle API errors.
+            #print ('myyy There was an API error : %s : %s' % (error.resp.status, error.resp.reason))
+            if error.resp.status == 403:
+                    hpeEmailList = []
+                    nonHpeEmailList = []
+                    counter = 0  
+                    for view in property.get('profiles', []):
+                      view_id = view.get('id')
+                      #print ("View ",view)
+
+                      # Construct the Profile User Link.
+                      links = analytics.management().profileUserLinks().list(
+                        accountId=account.get('id'),
+                        webPropertyId=property.get('id'),
+                        profileId=view_id
+                      ).execute()
+                      for property in links.get('items', []):
+                        #print ("Property: ",property)
+                        userRef = property.get('userRef')
+                        domain = userRef.get('email').split('@')[1]
+                        if domain == "hpe.com":
+                            counter += 1
+                            #hpeEmailList.append(userRef.get('email'))
+                            employee_details = get_user_info(userRef.get('email'),['cn'])
+                            if not employee_details:
+                              #print("   ########## HPE Epmloyee to be removed ",userRef.get('email'))
+                              hpeEmailList.append(userRef.get('email'))
+                            #print ('       HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
+                        else:
+                            if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
+                                counter += 1
+                                # print("   ********** GMAIL USER to be removed: %s Account id: %s Property ID: %s LinkID: %s" %(userRef.get('email'), account.get('id'), property.get('id'), propertyUserLink.get('id')))
+                                #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
+                                #print ('       Non HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
+                                #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email') 
+                                #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to hpedev@hpe.com with your HPE email id to get back your access\n\n"+GAcreate)
+                                nonHpeEmailList.append(userRef.get('email'))
+          if counter == 0:
+            hpeEmailList = []
+            nonHpeEmailList = []              
           for propertyUserLink in property_links.get('items', []):
             userRef = propertyUserLink.get('userRef', {})
-            # permissions = propertyUserLink.get('permissions', {})
-            # print ('       User Email = %s' % userRef.get('email'))
-            # print ('       Permissions local = %s' % permissions.get('local'))
             domain = userRef.get('email').split('@')[1]
             if domain == "hpe.com":
+                #pramod=""
                 #hpeEmailList.append(userRef.get('email'))
                 employee_details = get_user_info(userRef.get('email'),['cn'])
                 if not employee_details:
@@ -59,12 +99,13 @@ def google_analytics_audit(analytics):
                   hpeEmailList.append(userRef.get('email'))
                 #print ('       HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
             else:
-                if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
+                #if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
+                if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
                     # print("   ********** GMAIL USER to be removed: %s Account id: %s Property ID: %s LinkID: %s" %(userRef.get('email'), account.get('id'), property.get('id'), propertyUserLink.get('id')))
                     #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
                     #print ('       Non HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
-                    send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email') 
-                    +" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to hpedev@hpe.com with your HPE email id to get back your access\n\n"+GAcreate)
+                    #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email') 
+                    #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to hpedev@hpe.com with your HPE email id to get back your access\n\n"+GAcreate)
                     nonHpeEmailList.append(userRef.get('email'))
           print("      HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(hpeEmailList), hpeEmailList))
           print("      Non HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(nonHpeEmailList), nonHpeEmailList))

@@ -1,2 +1,12 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+
+# Distribution / packaging
+.Python
+env/
+build/
+dist/
+
+# secret key files
 client_secrets.json
 ga-api-test-pramod-bdbcfaf2b1cc.json
