@@ -27,9 +27,15 @@ def delete_prop_users(analytics, account_id, property_id, link_id):
       # Handle API errors.
       print ('There was an API error : %s : %s' %(error.resp.status, error.resp.reason))
 
-def get_webproperty_UserLinks(analytics, account_id, property_id):
-  property_links = analytics.management().webpropertyUserLinks().list(
-              accountId=account_id,
-              webPropertyId=property_id
-              ).execute()
-  return property_links
+# Construct the Profile User Link.
+def get_profile_user_links(analytics, account_id, property_id, view_id):
+  try:
+      links = analytics.management().profileUserLinks().list(
+                          accountId=account_id,
+                          webPropertyId=property_id,
+                          profileId=view_id
+                        ).execute()
+  except HttpError as error:
+      # Handle API errors.
+      print ('There was an API error : %s : %s' %(error.resp.status, error.resp.reason))
+  return links

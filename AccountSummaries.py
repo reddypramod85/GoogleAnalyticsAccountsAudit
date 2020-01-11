@@ -7,7 +7,7 @@ import httplib2
 from oauth2client import client
 from oauth2client import file
 from oauth2client import tools
-from Util import get_service
+from ServiceUtil import get_service
 
 def list_account_summaries(analytics):
     try:
