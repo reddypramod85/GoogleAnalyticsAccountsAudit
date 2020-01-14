@@ -1,6 +1,7 @@
 """A simple example of how to access the Google Analytics API."""
 
 import json
+import yaml
 from googleapiclient.errors import HttpError
 from googleapiclient.http import BatchHttpRequest
 import httplib2
@@ -14,6 +15,8 @@ import smtplib
 from HpeLdapSearch import get_user_info
 from WebPropertiesUsersUtility import get_webproperty_UserLinks,delete_prop_users
 from ProfileUserLinksUtility import get_profile_user_links
+import confuse
+
 
 
 GARemoveMsg=" has been removed. Please create a new google account with your HPE email id and reply back to this email with your HPE email id to create an account"
@@ -28,8 +31,9 @@ GAcreate = """ Create a Google Account with a company email address: \n\n1. Go t
 8. Log in to your company email. Open the email from Google regarding your new account. Click the confirmation link in the email to activate your Google account and complete the process with your company’s email address.\n"""
 
 
-def google_analytics_audit(analytics):
+def google_analytics_audit(analytics,cfg):
     counter = 0
+    account_owner=""
     try:
       accounts = AccountSummaries.main()
       #accounts = ['UA-107971078-1']
@@ -38,6 +42,22 @@ def google_analytics_audit(analytics):
       # print ('accounts: %s' % accounts)
       for account in accounts.get('items', []):
         print ('\n%s (%s) has (%d) properties\n' % (account.get('name'), account.get('id'), len(account.get('webProperties', []))))
+        if account.get('name') == "design@hpe":
+          account_owner=cfg['HPEDesignAccountOwner']
+        elif account.get('name') == "developer portal":
+          account_owner=cfg['HPEDEVAccountOwner']
+        elif account.get('name') == "Grommet":
+          account_owner=cfg['GrommetAccountOwner']
+        elif account.get('name') == "HPE GreenLake":
+          account_owner=cfg['HPEGreenLakeccountOwner']
+        elif account.get('name') == "HPE OneSphere":
+          account_owner=cfg['HPEOneSphereAccountOwner']
+        elif account.get('name') == "HPE OneView":
+          account_owner=cfg['OneViewAccountOwner']
+        elif account.get('name') == "hpe.global.dashboard":
+          account_owner=cfg['HPEGlobalDashccountOwner']
+        else:
+          account_owner="hpedev@hpe.com"
         for property in account.get('webProperties', []):
           print ('   %s (%s)   [%s | %s]\n' % (property.get('name'), property.get('id'),property.get('websiteUrl'), property.get('level')))
           try:
@@ -62,10 +82,11 @@ def google_analytics_audit(analytics):
                         else:
                             if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
                                 counter += 1
+                                print("       account owner"+account_owner)
                                 #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
                                 #print ('       Non HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
-                                #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email') 
-                                #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to hpedev@hpe.com with your HPE email id to get back your access\n\n"+GAcreate)
+                                #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email')
+                                #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to "+account_owner+" with your HPE email id to get back your access\n\n"+GAcreate)
                                 nonHpeEmailList.append(userRef.get('email'))
           if counter == 0:
             hpeEmailList = []
@@ -81,8 +102,9 @@ def google_analytics_audit(analytics):
                 #if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
                 if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
                     #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
-                    #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email') 
-                    #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to hpedev@hpe.com with your HPE email id to get back your access\n\n"+GAcreate)
+                    print("       account owner"+account_owner)
+                    #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email')
+                    #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to "+account_owner+" with your HPE email id to get back your access\n\n"+GAcreate)
                     nonHpeEmailList.append(userRef.get('email'))
           print("      HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(hpeEmailList), hpeEmailList))
           print("      Non HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(nonHpeEmailList), nonHpeEmailList))
@@ -114,7 +136,15 @@ def send_email(address, output):
 def main():
     # Define the auth scopes to request.
     scope = 'https://www.googleapis.com/auth/analytics.manage.users'
-    key_file_location = 'ga-api-test-pramod-bdbcfaf2b1cc.json'
+ 
+    with open('config.yaml', 'r') as ymlfile:
+        print("yaml", ymlfile)
+        try:
+            cfg = yaml.load(ymlfile, Loader=yaml.SafeLoader)
+            print(cfg['SecretKeyFile'])
+        except yaml.YAMLError as exc:
+            print(exc)
+
     print ("inside Google Account Audit main")
 
     # Authenticate and construct service.
@@ -122,10 +152,10 @@ def main():
             api_name='analytics',
             api_version='v3',
             scopes=[scope],
-            key_file_location=key_file_location)
+            key_file_location=cfg['SecretKeyFile'])
 
     # call the list_account_summaries function to Requests a list of all account summaries for the authorized user.
-    return google_analytics_audit(service)
+    return google_analytics_audit(service,cfg)
 
 
 
