@@ -19,21 +19,23 @@ import confuse
 
 
 
-GARemoveMsg=" has been removed. Please create a new google account with your HPE email id and reply back to this email with your HPE email id to create an account"
-GAcreate = """ Create a Google Account with a company email address: \n\n1. Go to google.com/accounts/NewAccount in your Web browser.\n
-2. Type in your company’s email address in the “Your current email address:” field.\n
-3. Click on Use my current email address instead.\n
-4. Type in a password for your Google account. This must be at least eight characters in length and should include a mixture of letters and numbers. Re-enter this password in the “Re-enter password:” field.\n
-5. Select your location by clicking the drop-down menu next to “Location.”\n
-6. Type in your birthday and the verification code under “Word Verification:.”\n
-7. Click the “I accept. Create my account” button at the bottom of the page to create your Google account with a company email address.\n
-8. Verify your email address by entering the verification code sent your email.\n
-8. Log in to your company email. Open the email from Google regarding your new account. Click the confirmation link in the email to activate your Google account and complete the process with your company’s email address.\n"""
+# GARemoveMsg=" has been removed. Please create a new google account with your HPE email id and reply back to this email with your HPE email id to create an account"
+# GAcreate = """ Create a Google Account with a company email address: \n\n1. Go to google.com/accounts/NewAccount in your Web browser.\n
+# 2. Type in your company’s email address in the “Your current email address:” field.\n
+# 3. Click on Use my current email address instead.\n
+# 4. Type in a password for your Google account. This must be at least eight characters in length and should include a mixture of letters and numbers. Re-enter this password in the “Re-enter password:” field.\n
+# 5. Select your location by clicking the drop-down menu next to “Location.”\n
+# 6. Type in your birthday and the verification code under “Word Verification:.”\n
+# 7. Click the “I accept. Create my account” button at the bottom of the page to create your Google account with a company email address.\n
+# 8. Verify your email address by entering the verification code sent your email.\n
+# 8. Log in to your company email. Open the email from Google regarding your new account. Click the confirmation link in the email to activate your Google account and complete the process with your company’s email address.\n"""
+
 
 
 def google_analytics_audit(analytics,cfg):
     counter = 0
     account_owner=""
+    emailMessage = str(cfg['DisclaimerMsg']+cfg['GARemoveMsg'] +cfg['GAcreate'])
     try:
       accounts = AccountSummaries.main()
       #accounts = ['UA-107971078-1']
@@ -80,13 +82,12 @@ def google_analytics_audit(analytics,cfg):
                             if not employee_details:
                               hpeEmailList.append(userRef.get('email'))
                         else:
-                            if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
+                            if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
                                 counter += 1
                                 print("       account owner"+account_owner)
                                 #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
                                 #print ('       Non HPE Email = %s     Domain = %s' % (userRef.get('email'), domain) )
-                                #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email')
-                                #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to "+account_owner+" with your HPE email id to get back your access\n\n"+GAcreate)
+                                send_email(userRef.get('email'), emailMessage.format(property.get('name'), userRef.get('email'), account_owner ))
                                 nonHpeEmailList.append(userRef.get('email'))
           if counter == 0:
             hpeEmailList = []
@@ -95,16 +96,15 @@ def google_analytics_audit(analytics,cfg):
             userRef = propertyUserLink.get('userRef', {})
             domain = userRef.get('email').split('@')[1]
             if domain == "hpe.com":
-                employee_details = get_user_info(userRef.get('email'),['cn'])
-                if not employee_details:
+                #employee_details = get_user_info(userRef.get('email'),['cn'])
+                #if not employee_details:
                   hpeEmailList.append(userRef.get('email'))
             else:
-                #if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
-                if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
+                if  userRef.get('email') and userRef.get('email') in myEmail and "gserviceaccount" not in userRef.get('email'):
+                #if  userRef.get('email') and "gserviceaccount" not in userRef.get('email'):
                     #delete_prop_users(analytics, account.get('id'), property.get('id'), propertyUserLink.get('id'))
                     print("       account owner"+account_owner)
-                    #send_email(userRef.get('email'), "Your access to "+property.get('name')+" Google Analytics Account with email id: " +userRef.get('email')
-                    #+" has been removed. Please create a new google account with your HPE email id by following below steps and send an email to "+account_owner+" with your HPE email id to get back your access\n\n"+GAcreate)
+                    send_email(userRef.get('email'), emailMessage.format(property.get('name'), userRef.get('email'), account_owner ))
                     nonHpeEmailList.append(userRef.get('email'))
           print("      HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(hpeEmailList), hpeEmailList))
           print("      Non HPE User(s) count to be removed is '{0}' and their email address are '{1}'\n" .format(len(nonHpeEmailList), nonHpeEmailList))
