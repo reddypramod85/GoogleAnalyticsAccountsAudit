@@ -6,7 +6,7 @@ HPEGreenLakeccountOwner: "chris.grandinetti@hpe.com"
 HPEOneSphereAccountOwner: "scampbell@hpe.com"
 OneViewAccountOwner: "edgar.circenis@hpe.com"
 HPEGlobalDashccountOwner: "hpe.global.dashboard@gmail.com"
-DisclaimerMsg: "**********This is an automatically generated email as part of the Google Analytics Accounts Audit Script – please do not reply to it.**********\n"
+DisclaimerMsg: "***********This is an automatically generated email as part of the Google Analytics Accounts Audit Script – please do not reply to it.***********\n"
 GARemoveMsg: " Your access to {0} Google Analytics Account with email id: {1} has been removed. Please create a new google account with your HPE email id by following below steps and send an email to {2}  with your HPE email id to get back your access\n\n"
 GAcreate: " Create a Google Account with a company email address: \n\n1. Go to google.com/accounts/NewAccount in your Web browser.\n
 2. Type in your company’s email address in the “Your current email address:” field.\n
