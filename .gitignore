@@ -11,3 +11,6 @@ dist/
 
 # secret key files
 ga-api-test-pramod-bdbcfaf2b1cc.json
+
+# config file
+config.yaml
