@@ -6,7 +6,6 @@ def get_user_info(email, fields):
   host = 'ldap.hp.com'
   baseDN = 'ou=people,o=hp.com'
   searchFilter = '(&(uid=' + email + '))'
-  # #  .\ldapsearch.exe '-x', '-LLL', '-h' 'ldap.hp.com' '-b' 'ou=people,o=hp.com', '(&(uid=pramod-reddy.sareddy@hpe.com))'
 
   cmd = [ldapsearch, '-x', '-LLL', '-h', host, '-b', baseDN, searchFilter] + fields
 
@@ -35,7 +34,6 @@ def get_user_info(email, fields):
   # return result
 
 def main():
-  email = "peng.liu@hpe.com"
   fields = ["cn", "hpStatus"]
 
 if __name__ == '__main__':
